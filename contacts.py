@@ -7,7 +7,7 @@ import os
 import datetime
 import json
 
-def buildAlert():
+def sendAlert():
     host = os.uname()[1]
     data = host.split('-')
     
@@ -20,36 +20,38 @@ def buildAlert():
             'timestamp':str(datetime.datetime.now().isoformat('T'))
             }
 
-    print str(json.dumps(payload))
-    return payload
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    address = 'http://dev-elk-shipper0.byu.edu:5546'
+    requests.post(address, json = payload, headers = headers)
 
 
 GPIO.setmode(GPIO.BCM)
-
 GPIO.setup(18, GPIO.IN)
 
-FLAG = 0
-
-print os.uname()[1]
+CONTACT_COUNTER = 1200
+ALERT_COUNTER = 5
 
 while (True):
 
-    if (GPIO.input(18) == 1):
-        print 'Projector Not Stolen'
-    elif FLAG < 5:
-        FLAG += 1
-        print 'Contact Broken!', FLAG
-    else:
-        FLAG = 0
-        address = 'http://dev-elk-shipper0.byu.edu:5546'
-        payload = buildAlert()
-        headers = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-                }
-            
-        requests.post(address, json = payload, headers = headers)
-        print 'Alert! Stolen Projector!'
+    FLAG = 0
 
+    while (GPIO.input(18) == 0):
 
-time.sleep(1)
+        if FLAG == ALERT_COUNTER:
+
+            sendAlert()
+            FLAG += 1
+
+        if FLAG < CONTACT_COUNTER:
+
+            FLAG += 1
+
+        else:
+
+            FLAG = ALERT_COUNTER
+
+        time.sleep(1)

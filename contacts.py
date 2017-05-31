@@ -5,6 +5,7 @@ import time
 import requests
 import os
 import datetime
+import json
 
 def buildAlert():
     host = os.uname()[1]
@@ -16,9 +17,10 @@ def buildAlert():
             'cause':'SECURITY',
             'category':'INFO',
             'hostname':host,
-            'timestamp':str(datetime.datetime.now())
+            'timestamp':str(datetime.datetime.now().isoformat('T'))
             }
 
+    print str(json.dumps(payload))
     return payload
 
 
@@ -41,10 +43,13 @@ while (True):
         FLAG = 0
         address = 'http://dev-elk-shipper0.byu.edu:5546'
         payload = buildAlert()
-        requests.post(address, data = payload)
+        headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+                }
+            
+        requests.post(address, json = payload, headers = headers)
         print 'Alert! Stolen Projector!'
 
-    time.sleep(2)
 
-
-
+time.sleep(1)
